@@ -1,4 +1,4 @@
-# Chatbot Vzla - Frontend de Asistencia de Emergencia
+# Encuéntralos - Frontend de Asistencia de Emergencia
 
 Frontend oficial del Chatbot de Asistencia Terremoto Venezuela desarrollado en Svelte 5 y SvelteKit para centralizar información y consultas críticas de ayuda.
 

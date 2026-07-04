@@ -1,7 +1,7 @@
 {
-  "name": "Chatbot Vzla",
-  "short_name": "Chatbot Vzla",
-  "description": "Información centralizada sobre el terremoto en Venezuela",
+  "name": "Encuéntralos",
+  "short_name": "Encuéntralos",
+  "description": "Información sobre el terremoto en Venezuela",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f3",
