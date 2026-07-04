@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Attachment } from '$lib/types';
+	import { wsStore } from '$lib/stores/websocket.svelte';
 
 	interface Props {
 		isLoading: boolean;
@@ -119,6 +120,7 @@
 			class="input h-full join-item w-full bg-base-300/80 border-base-300 focus:outline-none placeholder:text-base-content/40 text-sm lg:text-base"
 			bind:value={inputValue}
 			onkeydown={handleKeydown}
+			oninput={() => wsStore.wakeUp()}
 			disabled={isLoading}
 		/>
 
