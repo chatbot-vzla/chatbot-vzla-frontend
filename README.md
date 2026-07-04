@@ -49,6 +49,7 @@ cp .env.example .env
 ```
 
 - `OPENROUTER_API_KEY`: API key para los modelos de lenguaje de OpenRouter.
+- `PUBLIC_VITE_BACKEND_DOMAIN`: Dominio y puerto del backend Django Channels (por defecto `localhost:8000`).
 
 ### Ejecución
 
