@@ -49,6 +49,7 @@ cp .env.example .env
 ```
 
 - `OPENROUTER_API_KEY`: API key para los modelos de lenguaje de OpenRouter.
+- `PUBLIC_VITE_BACKEND_DOMAIN`: Dominio y puerto del backend Django Channels (por defecto `localhost:8000`).
 
 ### Ejecución
 
@@ -71,4 +72,6 @@ pnpm run preview
 
 - Core: Svelte 5 + SvelteKit.
 - Estilizado: Tailwind CSS v4 + DaisyUI v5.
+- Comunicación: WebSockets en tiempo real conectados al backend Django Channels, con reconexión automática e identificador de conversación guardado en `localStorage`.
+- Gestión de inactividad: Desconexión automática del WebSocket tras 3 minutos de inactividad y reconexión inmediata al interactuar o escribir en la interfaz.
 - Funcionalidades: Carga de archivos por drag & drop, streaming de respuestas, copiado de mensajes y botón de reintento ante errores.

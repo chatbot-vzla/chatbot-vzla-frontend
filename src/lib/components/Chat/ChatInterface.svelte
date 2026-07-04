@@ -2,25 +2,29 @@
 	import MessageComponent from '$lib/components/Chat/Message.svelte';
 	import SuggestedPrompts from '$lib/components/Chat/SuggestedPrompts.svelte';
 	import ChatInput from '$lib/components/Chat/ChatInput.svelte';
-	import { marked } from 'marked';
 	import { APP_CONFIG } from '$lib/config';
-	import type { Message, Attachment } from '$lib/types';
+	import type { Attachment } from '$lib/types';
+	import { wsStore } from '$lib/stores/websocket.svelte';
 
-	let messages = $state<Message[]>([]);
-	let isLoading = $state(false);
 	let messageContainer = $state<HTMLDivElement | null>(null);
 	let attachedFiles = $state<Attachment[]>([]);
 	let isDragging = $state(false);
 
+	let isWaiting = $derived(wsStore.messages.length > 0 && wsStore.messages[wsStore.messages.length - 1].role === 'user' && !wsStore.messages[wsStore.messages.length - 1].isError);
+
 	// Efecto para autoscroll optimizado con requestAnimationFrame
 	$effect(() => {
-		if (messageContainer && (messages.length > 0 || isLoading)) {
+		if (messageContainer && wsStore.messages.length > 0) {
 			requestAnimationFrame(() => {
 				if (messageContainer) {
 					messageContainer.scrollTop = messageContainer.scrollHeight;
 				}
 			});
 		}
+	});
+
+	$effect(() => {
+		wsStore.wakeUp();
 	});
 
 	// Manejo de drag and drop
@@ -30,7 +34,6 @@
 	}
 
 	function handleDragLeave(e: DragEvent) {
-		// Evitar parpadeos al pasar por encima de elementos hijos
 		const currentTarget = e.currentTarget as HTMLElement;
 		if (!currentTarget) return;
 		const rect = currentTarget.getBoundingClientRect();
@@ -61,89 +64,23 @@
 		}
 	}
 
-	async function sendMessage(text: string) {
-		if ((!text.trim() && attachedFiles.length === 0) || isLoading) return;
+	function sendMessage(text: string) {
+		if (!text.trim() && attachedFiles.length === 0) return;
 
-		// Añadir mensaje del usuario con sus adjuntos clonados
-		messages = [...messages, { role: 'user', content: text, attachments: [...attachedFiles] }];
-
-		// Limpiar los archivos adjuntos locales
+		wsStore.sendMessage(text, attachedFiles);
 		attachedFiles = [];
-		isLoading = true;
-
-		try {
-			// Enviar al backend limpiando la estructura para que solo reciba texto y no sature la API
-			const messagesForApi = messages.map((msg) => ({
-				role: msg.role,
-				content: msg.content
-			}));
-
-			const response = await fetch('/api/chat', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ messages: messagesForApi })
-			});
-
-			if (!response.ok) throw new Error('Error en la red');
-
-			const reader = response.body?.getReader();
-			const decoder = new TextDecoder();
-
-			messages = [...messages, { role: 'assistant', content: '' }];
-			let assistantMessageIndex = messages.length - 1;
-			let rawContent = '';
-			let lastParseTime = 0;
-
-			if (reader) {
-				while (true) {
-					const { done, value } = await reader.read();
-					if (done) break;
-
-					const chunk = decoder.decode(value, { stream: true });
-					rawContent += chunk;
-
-					// Optimización: Parsear markdown y actualizar el DOM como máximo cada 50ms para evitar alto consumo de CPU
-					const now = performance.now();
-					if (now - lastParseTime > 50) {
-						messages[assistantMessageIndex] = {
-							role: 'assistant',
-							content: await marked.parse(rawContent)
-						};
-						lastParseTime = now;
-					}
-				}
-				// Asegurar que el último fragmento se renderice siempre
-				messages[assistantMessageIndex] = {
-					role: 'assistant',
-					content: await marked.parse(rawContent)
-				};
-			}
-		} catch (error) {
-			console.error('Error enviando mensaje:', error);
-			messages = [
-				...messages,
-				{
-					role: 'assistant',
-					content:
-						'<p class="font-medium">Lo siento, ocurrió un error al intentar procesar tu mensaje. Por favor, intenta de nuevo.</p>',
-					isError: true
-				}
-			];
-		} finally {
-			isLoading = false;
-		}
 	}
 
-	async function handleRetry() {
-		const userMessages = messages.filter((m) => m.role === 'user');
+	function handleRetry() {
+		const userMessages = wsStore.messages.filter((m) => m.role === 'user');
 		if (userMessages.length === 0) return;
 		const lastUserMsg = userMessages[userMessages.length - 1];
 
-		// Eliminar el mensaje de error de la lista
-		messages = messages.filter((m) => !m.isError);
+		sendMessage(lastUserMsg.content);
+	}
 
-		// Reenviar
-		await sendMessage(lastUserMsg.content);
+	function handleWakeUp() {
+		wsStore.wakeUp();
 	}
 </script>
 
@@ -153,6 +90,7 @@
 	ondragover={handleDragOver}
 	ondragleave={handleDragLeave}
 	ondrop={handleDrop}
+	onpointerdown={handleWakeUp}
 >
 	<!-- Overlay de Drag & Drop -->
 	{#if isDragging}
@@ -184,7 +122,7 @@
 		bind:this={messageContainer}
 		class="grow px-2 py-6 md:p-6 overflow-y-auto w-full flex flex-col"
 	>
-		{#if messages.length === 0}
+		{#if wsStore.messages.length === 0}
 			<div class="my-auto flex flex-col items-center justify-center text-center space-y-8 py-8">
 				<div class="space-y-2">
 					<div class="text-3xl font-extrabold text-base-content tracking-tight">
@@ -199,7 +137,7 @@
 			</div>
 		{:else}
 			<div class="space-y-1">
-				{#each messages as msg, i (i)}
+				{#each wsStore.messages as msg, i (i)}
 					<MessageComponent
 						role={msg.role}
 						content={msg.content}
@@ -208,7 +146,7 @@
 						onRetry={msg.isError ? handleRetry : undefined}
 					/>
 				{/each}
-				{#if isLoading && messages[messages.length - 1]?.role === 'user'}
+				{#if isWaiting}
 					<!-- Esqueleto de carga inicial del asistente -->
 					<div class="chat chat-start mb-2 animate-pulse">
 						<div class="chat-image avatar placeholder">
@@ -225,7 +163,7 @@
 	</div>
 
 	<!-- Input de usuario -->
-	<ChatInput {isLoading} onSend={sendMessage} bind:attachedFiles />
+	<ChatInput isLoading={isWaiting} onSend={sendMessage} bind:attachedFiles />
 
 	<!-- Botón de WhatsApp Flotante -->
 	<a
