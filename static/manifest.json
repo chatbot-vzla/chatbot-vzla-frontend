@@ -1,6 +1,6 @@
 {
-  "name": "Encuéntralos",
-  "short_name": "Encuéntralos",
+  "name": "Encuentralos",
+  "short_name": "Encuentralos",
   "description": "Información sobre el terremoto en Venezuela",
   "start_url": "/",
   "display": "standalone",
