@@ -34,7 +34,7 @@ Tus respuestas deben ser:
 				Authorization: `Bearer ${OPENROUTER_API_KEY}`,
 				'Content-Type': 'application/json',
 				'HTTP-Referer': 'http://localhost:5173/', // Replace with actual domain in production
-				'X-Title': 'Chatbot Terremoto Vzla'
+				'X-Title': 'Encuentralos'
 			},
 			body: JSON.stringify({
 				model: 'meta-llama/llama-3-8b-instruct:free', // Default free model for now, can be changed

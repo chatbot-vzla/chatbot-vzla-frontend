@@ -1,4 +1,4 @@
-# Chatbot Vzla - Frontend de Asistencia de Emergencia
+# Encuentralos - Frontend de Asistencia de Emergencia
 
 Frontend oficial del Chatbot de Asistencia Terremoto Venezuela desarrollado en Svelte 5 y SvelteKit para centralizar información y consultas críticas de ayuda.
 
@@ -9,6 +9,7 @@ Frontend oficial del Chatbot de Asistencia Terremoto Venezuela desarrollado en S
 Para embeber este chatbot en cualquier sitio web externo, utiliza la ruta `/widget` en un iframe. Esta vista está optimizada para responsive y oculta elementos de navegación externos.
 
 ### Vista Previa del Widget:
+
 <p align="center">
 	<img src="./static/widget-preview.png" alt="Vista Previa del Widget" width="300" />
 </p>
@@ -28,7 +29,6 @@ Para embeber este chatbot en cualquier sitio web externo, utiliza la ruta `/widg
 
 > El atributo `allow="clipboard-write"` es obligatorio para permitir la funcionalidad de copiado de mensajes al portapapeles desde el iframe.
 > Puedes cambiar el parámetro de la URL `?theme=dark` por `?theme=light` para forzar el tema claro en el widget.
-
 
 ---
 
